@@ -38,6 +38,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 label.chk{display:inline-flex;gap:6px;align-items:center;margin-inline-end:12px}
 .frame,.two:not(.in)>.ctl{border:2px solid var(--accent);border-radius:8px;padding:8px 10px;box-sizing:border-box}
 .frame h2{margin:0 0 6px}
+bdi{white-space:nowrap}
+#cost td:last-child{white-space:nowrap}
+.sar{font-size:1.4em;font-weight:700;line-height:1;vertical-align:-.08em}
+.two .pp{white-space:nowrap;font-size:.66rem}
+.pp bdi{font-weight:800;font-size:1.12em}
 .pp{font-size:.74rem;color:#e8102a;margin-top:4px;line-height:1.3}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pp{color:#ff6b7a}}
 :root[data-theme="dark"] .pp{color:#ff6b7a}

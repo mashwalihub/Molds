@@ -99,7 +99,7 @@ function ffd(lens){
   return bins.length;
 }
 const f1=x=>(Math.round(x*10)/10).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:1});
-const money=x=>'⃁ '+Math.round(x).toLocaleString('en-US');
+const money=x=>'<bdi dir="ltr" style="unicode-bidi:isolate"><span class="sar">⃁</span> '+Math.round(x).toLocaleString('en-US')+'</bdi>'; // riyal symbol always on the left of the amount
 function renderCost(g){
   const pS=parseFloat($('pSheet').value)||0,pA=parseFloat($('pAng').value)||0,pT=parseFloat($('pTube').value);
   const res=bestSheets(g.sheet);
@@ -136,8 +136,8 @@ function renderCost(g){
   const sk=7.85*THK;
   const sp=(t,v)=>'<span style="display:inline-block;margin-inline-end:12px">'+t+': '+money(v)+'</span>';
   $('ppSheet').innerHTML='سعر اللوح قبل الضريبة: '+sp('122×244',1.22*2.44*sk*pS/1000)+sp('100×200',2*sk*pS/1000)+(THK>2?sp('122×300',1.22*3*sk*pS/1000):'');
-  $('ppAng').innerHTML='طول الزاوية 6 متر قبل الضريبة: '+money(angKg()*6*pA/1000);
-  $('ppTube').innerHTML=(g.tubes.length&&pT>0)?'طول التيوب 6 متر قبل الضريبة: '+money(tubeKg()*6*pT/1000):'';
+  $('ppAng').innerHTML='الزاوية 6م قبل الضريبة: '+money(angKg()*6*pA/1000);
+  $('ppTube').innerHTML=(g.tubes.length&&pT>0)?'التيوب 6م قبل الضريبة: '+money(tubeKg()*6*pT/1000):'';
   $('cost').innerHTML=h;
   const m=Math.max(0,parseFloat($('pM').value)||0),pre=total*m,vat=pre*0.15;
   $('sCost').innerHTML=money(total);
@@ -359,7 +359,7 @@ $('ta').addEventListener('input',()=>{syncB();schedule();});
 $('tb').addEventListener('input',()=>{const v=+$('tb').value,ix=bList.map(x=>TAL.indexOf(x));let best=ix[0];ix.forEach(k=>{if(Math.abs(k-v)<Math.abs(best-v))best=k;});$('tb').value=best;bVal=TAL[best];syncT();schedule();});
 $('pW').addEventListener('input',()=>{$('wAuto').checked=false;$('oW').textContent=$('pW').value;});
 $('wAuto').addEventListener('change',()=>renderCost(S.g));
-$('pSheet').addEventListener('input',()=>{const v=+$('pSheet').value;['pAng','pTube'].forEach(i=>{$(i).min=v+200;$(i).max=Math.max(6500,v+3000);$(i).value=v+500;});['oPA','oPT'].forEach((o,k)=>{$(o).textContent=$(k?'pTube':'pAng').value;});});
+$('pSheet').addEventListener('input',()=>{const v=+$('pSheet').value;['pAng','pTube'].forEach(i=>{$(i).max=v+750;$(i).min=v+200;$(i).value=v+250;});['oPA','oPT'].forEach((o,k)=>{$(o).textContent=$(k?'pTube':'pAng').value;});});
 [['pSheet','oPS'],['pAng','oPA'],['pTube','oPT']].forEach(([i,o])=>{const u=()=>{$(o).textContent=$(i).value;};$(i).addEventListener('input',u);u();});
 const clampM=()=>{let v=parseFloat($('pM').value);if(!(v>=2))v=2;if(v>6)v=6;$('pM').value=v;};
 const stepM=d=>{let v=parseFloat($('pM').value);if(isNaN(v))v=2.5;v=Math.round((v+d)*100)/100;$('pM').value=Math.min(6,Math.max(2,v));renderCost(S.g);};
