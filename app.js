@@ -120,12 +120,12 @@ function renderCost(g){
   h+=`<tr><td>مبسط ${ANG*10}×${AT*10} مم</td><td>${f1(uF)}</td><td>${f1(uF*wf)}</td><td>${money(cF)}</td></tr>`;
   buy.push('مبسط: '+ffd(g.flat)+' عود 6 م');
   const cA=uA*wf*pA/1000;total+=cA;
-  h+=`<tr><td>زاوية ${ANG*10}×${ANG*10}×${AT*10} مم</td><td>${f1(uA)}</td><td>${f1(uA*wf)}</td><td>${money(cA)}</td></tr>`;
+  h+=`<tr><td>زاوية ربط ${ANG*10}×${ANG*10}×${AT*10} مم</td><td>${f1(uA)}</td><td>${f1(uA*wf)}</td><td>${money(cA)}</td></tr>`;
   buy.push('زاوية: '+ffd(g.ang)+' عود 6 م');
   if(g.tubes.length){
     const tl=[];g.tubes.forEach(t=>{for(let i=0;i<t[1];i++)tl.push(t[2]);});
     const uT=tl.reduce((s,x)=>s+x,0)/100*tubeKg();
-    const tn=`تيوب ${TA*10}×${TB*10}×${TT} مم`;
+    const tn=`تيوب تدعيم داخلي ${TA*10}×${TB*10}×${TT} مم`;
     if(pT>0){const ct=uT*wf*pT/1000;total+=ct;h+=`<tr><td>${tn}</td><td>${f1(uT)}</td><td>${f1(uT*wf)}</td><td>${money(ct)}</td></tr>`;}
     else{missing=true;h+=`<tr><td>${tn}</td><td>${f1(uT)}</td><td>${f1(uT*wf)}</td><td class="warn">أدخل السعر</td></tr>`;}
     buy.push('تيوب: '+ffd(tl)+' عود 6 م');
