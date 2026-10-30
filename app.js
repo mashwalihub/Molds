@@ -133,6 +133,11 @@ function renderCost(g){
   h+=`<tr class="total"><td colspan="3">الإجمالي${missing?' (بدون التيوب)':''}</td><td>${money(total)}</td></tr></table>`;
   h+='<p class="dim" style="margin:6px 0 0;font-size:.9rem">الوزن بالكجم. التكلفة = الوزن المستعمل × (1 + الهدر) × سعر الطن. لا تشمل القص واللحام والمسامير والدهان. السماكة اسمية، وقد تنقص 0.2 مم فيما فوق 2.8.</p>';
   h+='<p class="dim" style="margin:4px 0 0;font-size:.9rem">للشراء بعد التقسيم الفعلي: '+buy.join(' · ')+'.</p>';
+  const sk=7.85*THK;
+  const sp=(t,v)=>'<span style="display:inline-block;margin-inline-end:12px">'+t+': '+money(v)+'</span>';
+  $('ppSheet').innerHTML='سعر اللوح قبل الضريبة: '+sp('122×244',1.22*2.44*sk*pS/1000)+sp('100×200',2*sk*pS/1000)+(THK>2?sp('122×300',1.22*3*sk*pS/1000):'');
+  $('ppAng').innerHTML='طول الزاوية 6 متر قبل الضريبة: '+money(angKg()*6*pA/1000);
+  $('ppTube').innerHTML=(g.tubes.length&&pT>0)?'طول التيوب 6 متر قبل الضريبة: '+money(tubeKg()*6*pT/1000):'';
   $('cost').innerHTML=h;
   const m=Math.max(0,parseFloat($('pM').value)||0),pre=total*m,vat=pre*0.15;
   $('sCost').innerHTML=money(total);
@@ -281,14 +286,13 @@ function drawSvgs(){
   const vd=(x,y1,y2)=>`<path d="M${f(x)},${f(y1)} V${f(y2)} M${f(x-2.2)},${f(y1)} h4.4 M${f(x-2.2)},${f(y2)} h4.4"/>`;
   const hd=(y,x1,x2)=>`<path d="M${f(x1)},${f(y)} H${f(x2)} M${f(x1)},${f(y-2.2)} v4.4 M${f(x2)},${f(y-2.2)} v4.4"/>`;
   const G=c=>`<g stroke="currentColor" stroke-width=".6" fill="none">${c}</g>`;
-  /* angle section (like the catalogue drawing): sharp outer corner, inner fillet, rounded toes; numbers follow the sliders */
-  const a=ANG*10,ta=AT*10,k=0.7,la=a*k,t=Math.max(ta*k,1.2),r1=Math.min(t*1.2,la-t),r2=Math.min(t*0.6,t),x0=19,yb=58,top=yb-la;
-  const d=`M${x0},${yb} L${x0},${f(top)} L${f(x0+t-r2)},${f(top)} A${f(r2)},${f(r2)} 0 0 1 ${f(x0+t)},${f(top+r2)} L${f(x0+t)},${f(yb-t-r1)} A${f(r1)},${f(r1)} 0 0 0 ${f(x0+t+r1)},${f(yb-t)} L${f(x0+la-r2)},${f(yb-t)} A${f(r2)},${f(r2)} 0 0 1 ${f(x0+la)},${f(yb-t+r2)} L${f(x0+la)},${yb} Z`;
-  $('dAng').innerHTML=`<path class="shp" d="${d}" fill="#e9dfa8" style="stroke-width:.9"/>`+G(vd(x0-7,top,yb)+hd(yb+8,x0,x0+la)+vd(x0+la+5,yb-t,yb))+`<text x="${x0-12}" y="${f((top+yb)/2+3)}">${a}</text><text x="${f(x0+la/2)}" y="${yb+20}">${a}</text><text x="${f(x0+la+10)}" y="${f(yb-t/2+3)}">${ta}</text>`;
-  /* tube section: outer corner radius = wall thickness */
+  /* fixed-size drawings in the middle of the frame: only the numbers follow the sliders */
+  const a=ANG*10,ta=AT*10,la=50,t=Math.max(50*ta/a,1.2),r1=Math.min(t*1.2,50-t),r2=t*0.5,x0=20,top=16,yb=top+la;
+  const d=`M${x0},${yb} L${x0},${top} L${x0+t-r2},${top} A${r2},${r2} 0 0 1 ${x0+t},${top+r2} L${x0+t},${yb-t-r1} A${r1},${r1} 0 0 0 ${x0+t+r1},${yb-t} L${x0+la-r2},${yb-t} A${r2},${r2} 0 0 1 ${x0+la},${yb-t+r2} L${x0+la},${yb} Z`;
+  $('dAng').innerHTML=`<path class="shp" d="${d}" fill="#e9dfa8" style="stroke-width:.9"/>`+G(vd(x0-7,top,yb)+hd(yb+8,x0,x0+la)+vd(x0+la+5,yb-t,yb))+`<text x="${x0-13}" y="${f((top+yb)/2+3)}">${a}</text><text x="${x0+la/2}" y="${yb+19}">${a}</text><text x="${x0+la+11}" y="${f(yb-t/2+3)}">${ta}</text>`;
   if(TA>0&&TB>0){
-    const q=0.55,w=TA*10*q,h=TB*10*q,tt=Math.max(TT*q,0.8),ro=Math.max(TT*q,0.8),ri=ro/2,x=45-w/2,y=58-h;
-    $('dTube').innerHTML=`<rect class="shp" x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" rx="${f(ro)}" fill="#c3e3f0"/><rect class="shp" x="${f(x+tt)}" y="${f(y+tt)}" width="${f(Math.max(w-2*tt,0))}" height="${f(Math.max(h-2*tt,0))}" rx="${f(ri)}" fill="var(--panel)"/>`+G(vd(x-6,y,58)+hd(66,x,x+w)+vd(x+w+5,y,y+tt))+`<text x="${f(x-13)}" y="${f(y+h/2+3)}">${TB*10}</text><text x="45" y="${78}">${TA*10}</text><text x="${f(x+w+14)}" y="${f(y+tt/2+3)}">${TT}</text>`;
+    const w=50,h=Math.max(10,w*TB/TA),tt=Math.max(w*TT/(TA*10),0.8),ro=tt,ri=tt/2,x=20,y=41-h/2;
+    $('dTube').innerHTML=`<rect class="shp" x="${x}" y="${f(y)}" width="${w}" height="${f(h)}" rx="${ro}" fill="#c3e3f0"/><rect class="shp" x="${x+tt}" y="${f(y+tt)}" width="${w-2*tt}" height="${f(Math.max(h-2*tt,0))}" rx="${ri}" fill="var(--panel)"/>`+G(vd(x-7,y,y+h)+hd(y+h+8,x,x+w)+vd(x+w+5,y,y+tt))+`<text x="${x-13}" y="${f(y+h/2+3)}">${TB*10}</text><text x="${x+w/2}" y="${f(y+h+19)}">${TA*10}</text><text x="${x+w+11}" y="${f(y+tt/2+3)}">${TT}</text>`;
   }else $('dTube').innerHTML='<text x="45" y="46">بدون تدعيم</text>';
 }
 function renderInfo(){
@@ -340,7 +344,7 @@ let bVal=20,bList=[],ttVal=1.25,ttList=TTH;
 function syncB(){ // second side offers only the sizes that exist with the first side
   const a=TAL[+$('ta').value];bList=compat(a);
   let i=bList.indexOf(bVal);if(i<0){i=bList.indexOf(a);if(i<0)i=0;}
-  bVal=bList[i];const tb=$('tb');tb.max=bList.length-1;tb.value=i;tb.disabled=bList.length<2;
+  bVal=bList[i];const tb=$('tb');tb.max=TAL.length-1;tb.value=TAL.indexOf(bVal);tb.disabled=bList.length<2; // same scale as side A; thumb stops at A
   syncT();
 }
 function syncT(){ // max wall thickness by the smaller side: up to 30 mm (e.g. 30x30, 60x30): 3, 40-50 mm (e.g. 40x40): 5, 60 mm and up: 6
@@ -352,10 +356,10 @@ function syncT(){ // max wall thickness by the smaller side: up to 30 mm (e.g. 3
 }
 $('tt').addEventListener('input',()=>{ttVal=ttList[+$('tt').value];schedule();});
 $('ta').addEventListener('input',()=>{syncB();schedule();});
-$('tb').addEventListener('input',()=>{bVal=bList[+$('tb').value];syncT();schedule();});
+$('tb').addEventListener('input',()=>{const v=+$('tb').value,ix=bList.map(x=>TAL.indexOf(x));let best=ix[0];ix.forEach(k=>{if(Math.abs(k-v)<Math.abs(best-v))best=k;});$('tb').value=best;bVal=TAL[best];syncT();schedule();});
 $('pW').addEventListener('input',()=>{$('wAuto').checked=false;$('oW').textContent=$('pW').value;});
 $('wAuto').addEventListener('change',()=>renderCost(S.g));
-$('pSheet').addEventListener('input',()=>{const v=+$('pSheet').value;['pAng','pTube'].forEach(i=>{$(i).min=v+300;$(i).max=Math.max(6500,v+3000);$(i).value=v+500;});['oPA','oPT'].forEach((o,k)=>{$(o).textContent=$(k?'pTube':'pAng').value;});});
+$('pSheet').addEventListener('input',()=>{const v=+$('pSheet').value;['pAng','pTube'].forEach(i=>{$(i).min=v+200;$(i).max=Math.max(6500,v+3000);$(i).value=v+500;});['oPA','oPT'].forEach((o,k)=>{$(o).textContent=$(k?'pTube':'pAng').value;});});
 [['pSheet','oPS'],['pAng','oPA'],['pTube','oPT']].forEach(([i,o])=>{const u=()=>{$(o).textContent=$(i).value;};$(i).addEventListener('input',u);u();});
 const clampM=()=>{let v=parseFloat($('pM').value);if(!(v>=2))v=2;if(v>6)v=6;$('pM').value=v;};
 const stepM=d=>{let v=parseFloat($('pM').value);if(isNaN(v))v=2.5;v=Math.round((v+d)*100)/100;$('pM').value=Math.min(6,Math.max(2,v));renderCost(S.g);};
