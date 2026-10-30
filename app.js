@@ -1,9 +1,9 @@
 (function(){
 let T=0.28,THK=2.8,ANG=3,AT=0.3,TA=2,TB=2,TT=1.25,TON=true;
 const SQ=[12,16,20,25,30,40,50,60,75,80,100];                       // square tubes (mm)
-const RECT=[[15,30],[20,40],[25,50],[30,60],[40,80],[50,100]]; // rectangular tubes (mm)
-const TAL=[0,...[...new Set([...SQ,...RECT.flat()])].sort((x,y)=>x-y)];
-const compat=a=>{if(!a)return[0];const r=new Set();if(SQ.includes(a))r.add(a);RECT.forEach(([p,q])=>{if(p===a)r.add(q);if(q===a)r.add(p);});return[...r].sort((x,y)=>x-y);};
+const RECT=[[10,15],[15,30],[20,30],[20,40],[25,50],[30,60],[40,80],[50,100]]; // rectangular tubes (mm)
+const compat=a=>{if(!a)return[0];const r=new Set();if(SQ.includes(a))r.add(a);RECT.forEach(([p,q])=>{if(p===a)r.add(q);if(q===a)r.add(p);});return[...r].filter(x=>x<=a).sort((x,y)=>x-y);}; // side B never exceeds side A
+const TAL=[0,...[...new Set([...SQ,...RECT.flat()])].sort((x,y)=>x-y).filter(a=>compat(a).length)];
 const TTH=[1,1.2,1.25,1.5,1.8,2,2.5,3,4,5,6]; // standard tube sides / wall thicknesses (mm)
 const SHEETS=[1.25,1.5,1.8,2,2.8,4,5,6,8]; // market sheet thicknesses (mm), nominal
 const BAR=600;
@@ -274,7 +274,22 @@ function build(resetCam){
     controls.target.set(0,Hc*.75+8,0);
     camera.position.set(R*1.9,R*1.5+Hc*.5,R*2.0);controls.update();
   }
-  renderInfo();renderCost(g0);applyVis();apply(+slider.value/1000);
+  drawSvgs();renderInfo();renderCost(g0);applyVis();apply(+slider.value/1000);
+}
+function drawSvgs(){
+  const f=x=>+(+x).toFixed(2);
+  const vd=(x,y1,y2)=>`<path d="M${f(x)},${f(y1)} V${f(y2)} M${f(x-2.2)},${f(y1)} h4.4 M${f(x-2.2)},${f(y2)} h4.4"/>`;
+  const hd=(y,x1,x2)=>`<path d="M${f(x1)},${f(y)} H${f(x2)} M${f(x1)},${f(y-2.2)} v4.4 M${f(x2)},${f(y-2.2)} v4.4"/>`;
+  const G=c=>`<g stroke="currentColor" stroke-width=".6" fill="none">${c}</g>`;
+  /* angle section (like the catalogue drawing): sharp outer corner, inner fillet, rounded toes; numbers follow the sliders */
+  const a=ANG*10,ta=AT*10,k=0.7,la=a*k,t=Math.max(ta*k,1.2),r1=Math.min(t*1.2,la-t),r2=Math.min(t*0.6,t),x0=19,yb=58,top=yb-la;
+  const d=`M${x0},${yb} L${x0},${f(top)} L${f(x0+t-r2)},${f(top)} A${f(r2)},${f(r2)} 0 0 1 ${f(x0+t)},${f(top+r2)} L${f(x0+t)},${f(yb-t-r1)} A${f(r1)},${f(r1)} 0 0 0 ${f(x0+t+r1)},${f(yb-t)} L${f(x0+la-r2)},${f(yb-t)} A${f(r2)},${f(r2)} 0 0 1 ${f(x0+la)},${f(yb-t+r2)} L${f(x0+la)},${yb} Z`;
+  $('dAng').innerHTML=`<path class="shp" d="${d}" fill="#e9dfa8" style="stroke-width:.9"/>`+G(vd(x0-7,top,yb)+hd(yb+8,x0,x0+la)+vd(x0+la+5,yb-t,yb))+`<text x="${x0-12}" y="${f((top+yb)/2+3)}">${a}</text><text x="${f(x0+la/2)}" y="${yb+20}">${a}</text><text x="${f(x0+la+10)}" y="${f(yb-t/2+3)}">${ta}</text>`;
+  /* tube section: outer corner radius = wall thickness */
+  if(TA>0&&TB>0){
+    const q=0.55,w=TA*10*q,h=TB*10*q,tt=Math.max(TT*q,0.8),ro=Math.max(TT*q,0.8),ri=ro/2,x=45-w/2,y=58-h;
+    $('dTube').innerHTML=`<rect class="shp" x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" rx="${f(ro)}" fill="#c3e3f0"/><rect class="shp" x="${f(x+tt)}" y="${f(y+tt)}" width="${f(Math.max(w-2*tt,0))}" height="${f(Math.max(h-2*tt,0))}" rx="${f(ri)}" fill="var(--panel)"/>`+G(vd(x-6,y,58)+hd(66,x,x+w)+vd(x+w+5,y,y+tt))+`<text x="${f(x-13)}" y="${f(y+h/2+3)}">${TB*10}</text><text x="45" y="${78}">${TA*10}</text><text x="${f(x+w+14)}" y="${f(y+tt/2+3)}">${TT}</text>`;
+  }else $('dTube').innerHTML='<text x="45" y="46">بدون تدعيم</text>';
 }
 function renderInfo(){
   const s=S,i=s.info,g=s.g;
@@ -313,6 +328,8 @@ const slider=$('slider');
 function outs(){$('ox').textContent=$('sx').value;$('oy').textContent=$('sy').value;$('oz').textContent=$('sz').value;$('ot').textContent=$('st').value;$('om').textContent=SHEETS[+$('sm').value];$('oa').textContent=ANGL[+$('sa').value];$('ota').textContent=TAL[+$('ta').value]||'0';$('otb').textContent=bVal||'0';$('ott').textContent=ttVal;$('oat').textContent=atVal;}
 let pend=false;
 function schedule(){outs();if(pend)return;pend=true;requestAnimationFrame(()=>{pend=false;build(false);});}
+function limitY(){const x=+$('sx').value;if(+$('sy').value>x)$('sy').value=x;} // length is free; the width thumb stops at the length thumb (same scale)
+$('sx').addEventListener('input',limitY);$('sy').addEventListener('input',limitY);
 ['sx','sy','sz','st','sm'].forEach(id=>$(id).addEventListener('input',schedule));
 const ANGL=[25,30,40,50,60,70,80],ANGT={25:[2.5,3],30:[2.5,3],40:[3,4,5],50:[4,5,6],60:[5,6],70:[5,6,7],80:[6,8,10]}; // angle sizes (mm) and their thicknesses (mm)
 let atVal=3,atList=[2.5,3];
@@ -326,8 +343,8 @@ function syncB(){ // second side offers only the sizes that exist with the first
   bVal=bList[i];const tb=$('tb');tb.max=bList.length-1;tb.value=i;tb.disabled=bList.length<2;
   syncT();
 }
-function syncT(){ // max wall thickness by the smaller side: <20 mm: 3, <60 mm: 5, otherwise 6
-  const a=TAL[+$('ta').value],m=Math.min(a||999,bVal||999),mx=m<20?3:m<60?5:6;
+function syncT(){ // max wall thickness by the smaller side: up to 30 mm (e.g. 30x30, 60x30): 3, 40-50 mm (e.g. 40x40): 5, 60 mm and up: 6
+  const a=TAL[+$('ta').value],m=Math.min(a||999,bVal||999),mx=m<=30?3:m<60?5:6;
   ttList=TTH.filter(x=>x<=mx);
   if(ttVal>mx)ttVal=mx;
   let i=ttList.indexOf(ttVal);if(i<0){i=ttList.filter(x=>x<ttVal).length-1;if(i<0)i=0;}
@@ -366,5 +383,5 @@ function loop(now){
   else if(tgt!==null){const dv=tgt-v;if(Math.abs(dv)<.004||reduce){setS(tgt);tgt=null;}else setS(v+Math.sign(dv)*Math.min(Math.abs(dv),dt*.5));}
   controls.update();renderer.render(scene,camera);requestAnimationFrame(loop);
 }
-syncA();syncB();outs();build(true);resize();requestAnimationFrame(loop);
+limitY();syncA();syncB();outs();build(true);resize();requestAnimationFrame(loop);
 })();
