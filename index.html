@@ -17,6 +17,24 @@
     <h1>قوالب الخرسانة ثلاثية الأبعاد</h1>
     <p class="sub">قالب خارجي مفكوك بالبراغي + لُبّ داخلي بتدعيم من التيوب الفارغ. اسحب بالإصبع للتدوير. غيّر المقاس من الأشرطة فتتغير القطع والتكلفة.</p>
     <div id="view"><div id="stepLabel"></div></div>
+    <div style="margin-top:10px">
+      <h2>التفكيك</h2>
+      <input type="range" id="slider" min="0" max="1000" value="0" aria-label="نسبة التفكيك">
+      <div class="row one" style="margin-top:8px">
+        <button id="play" class="primary">تشغيل</button>
+        <button id="b0">مركّب</button>
+        <button id="b1">1 اللُّب</button>
+        <button id="b2">2 الزوايا</button>
+        <button id="b3">3 الأرضية</button>
+        <button id="b4">4 الجوانب</button>
+        <button id="b5">5 فصل</button>
+      </div>
+      <div style="margin-top:8px">
+        <label class="chk"><input type="checkbox" id="tCore" checked> القالب الداخلي</label>
+        <label class="chk"><input type="checkbox" id="tOuter" checked> القالب الخارجي</label>
+        <label class="chk"><input type="checkbox" id="tConc" checked> الخرسانة</label>
+      </div>
+    </div>
     <table class="ctl" style="margin-top:12px">
       <caption>المقاسات (سم)</caption>
         <tr><th scope="row">X الطول</th><td><input type="range" id="sx" min="30" max="100" step="5" value="60"></td><td class="v"><output id="ox"></output></td></tr>
@@ -29,7 +47,7 @@
       <span><i style="background:#56606e"></i>جوانب صاج</span>
       <span><i style="background:#3d4653"></i>أرضية صاج</span>
       <span><i style="background:#a3acb6"></i>زوايا</span>
-      <span><i style="background:#c8a24a"></i>أشرطة صاج 3 سم</span>
+      <span><i style="background:#c8a24a"></i>مبسط التدعيم (بعرض الزاوية)</span>
       <span><i style="background:#e0a800"></i>براغي M8 (من الخارج)</span>
       <span><i style="background:#2b7a9b"></i>القالب الداخلي</span>
       <span><i style="background:#c3e3f0"></i>تيوب التدعيم</span>
@@ -37,61 +55,48 @@
     </div>
   </div>
   <div class="panel">
+    <div>
+      <h2>صاج الجدران والأرضية</h2>
+      <div class="two">
+        <table class="ctl"><tr><th scope="row">السماكة (مم)</th><td><input type="range" id="sm" min="0" max="8" step="1" value="4"></td><td class="v"><output id="om"></output></td></tr></table>
+        <table class="ctl"><tr><th scope="row">سعر الطن</th><td><input type="range" id="pSheet" min="2000" max="6000" step="50" value="3000"></td><td class="v"><output id="oPS"></output></td></tr></table>
+      </div>
+    </div>
+    <div class="two">
     <table class="ctl">
       <caption>الزوايا</caption>
         <tr><th scope="row">الضلع (مم)</th><td><input type="range" id="sa" min="0" max="6" step="1" value="1"></td><td class="v"><output id="oa"></output></td></tr>
         <tr><th scope="row">السماكة (مم)</th><td><input type="range" id="sat" min="0" max="1" step="1" value="1"></td><td class="v"><output id="oat"></output></td></tr>
-        <tr><th scope="row">سعر الطن</th><td colspan="2"><input id="pAng" type="number" inputmode="decimal" value="3250"></td></tr>
+        <tr><th scope="row">سعر الطن</th><td><input type="range" id="pAng" min="3300" max="6500" step="50" value="3500"></td><td class="v"><output id="oPA"></output></td></tr>
     </table>
     <table class="ctl">
       <caption>التيوب (0 = بدون تدعيم)</caption>
         <tr><th scope="row">الضلع A (مم)</th><td><input type="range" id="ta" min="0" max="12" step="1" value="4"></td><td class="v"><output id="ota"></output></td></tr>
         <tr><th scope="row">الضلع B (مم)</th><td><input type="range" id="tb" min="0" max="0" step="1" value="0"></td><td class="v"><output id="otb"></output></td></tr>
         <tr><th scope="row">السماكة (مم)</th><td><input type="range" id="tt" min="0" max="10" step="1" value="2"></td><td class="v"><output id="ott"></output></td></tr>
-        <tr><th scope="row">سعر الطن</th><td colspan="2"><input id="pTube" type="number" inputmode="decimal" value="3250"></td></tr>
+        <tr><th scope="row">سعر الطن</th><td><input type="range" id="pTube" min="3300" max="6500" step="50" value="3500"></td><td class="v"><output id="oPT"></output></td></tr>
     </table>
-    <table class="ctl">
-      <caption>صاج الجدران والأرضية</caption>
-        <tr><th scope="row">السماكة (مم)</th><td><input type="range" id="sm" min="0" max="20" step="1" value="4"></td><td class="v"><output id="om"></output></td></tr>
-        <tr><th scope="row">سعر الطن</th><td colspan="2"><input id="pSheet" type="number" inputmode="decimal" value="3000"></td></tr>
-    </table>
+    </div>
     <table class="ctl">
       <caption>الهدر</caption>
-        <tr><th scope="row">نسبة الهدر (%)</th><td><input type="range" id="pW" min="0" max="20" step="1" value="5"></td><td class="v"><output id="oW">5</output></td></tr>
+        <tr><th scope="row">نسبة الهدر (%)<label class="chk" style="display:flex;margin:2px 0 0;font-size:.9rem"><input type="checkbox" id="wAuto" checked> تلقائي</label></th><td><input type="range" id="pW" min="0" max="20" step="0.5" value="5"></td><td class="v"><output id="oW">5</output></td></tr>
     </table>
     <div class="scroll" id="cost"></div>
     <table class="ctl" id="sellT">
       <caption>سعر البيع</caption>
       <tr><th scope="row">التكلفة</th><td id="sCost" class="v"></td></tr>
-      <tr><th scope="row">عدد الأضعاف</th><td><input id="pM" type="number" inputmode="decimal" step="any" min="0" value="1"></td></tr>
+      <tr><th scope="row">عدد الأضعاف <span id="sPct"></span></th><td><div class="stp"><button type="button" id="mDn" aria-label="أقل">▼</button><input id="pM" type="number" inputmode="decimal" enterkeyhint="done" step="0.25" min="2" max="6" value="2.5"><button type="button" id="mUp" aria-label="أكثر">▲</button></div></td></tr>
       <tr><th scope="row" id="sLbl">السعر × 1</th><td class="v" id="sPre"></td></tr>
       <tr><th scope="row">الضريبة 15%</th><td class="v" id="sVat"></td></tr>
       <tr class="total"><th scope="row">السعر بعد الضريبة</th><td class="v" id="sPost"></td></tr>
     </table>
-    <div>
-      <h2>التفكيك</h2>
-      <input type="range" id="slider" min="0" max="1000" value="0" aria-label="نسبة التفكيك">
-      <div class="row" style="margin-top:8px">
-        <button id="play" class="primary">تشغيل</button>
-        <button id="b0">مركّب</button>
-        <button id="b1">1 رفع اللُّب</button>
-        <button id="b2">2 فك الزوايا</button>
-        <button id="b3">3 فك الأرضية</button>
-        <button id="b4">4 سحب الجوانب</button>
-        <button id="b5">5 فصل الأرضية</button>
-      </div>
-      <div style="margin-top:8px">
-        <label class="chk"><input type="checkbox" id="tCore" checked> القالب الداخلي</label>
-        <label class="chk"><input type="checkbox" id="tOuter" checked> القالب الخارجي</label>
-        <label class="chk"><input type="checkbox" id="tConc" checked> الخرسانة</label>
-      </div>
-    </div>
     <div class="scroll" id="info"></div>
     <div>
       <h2>طريقة التركيب والفك</h2>
       <ul class="notes">
         <li>في الأركان: الجانبان الطويلان يزيد صاجهما 3 سم عند كل طرف. الجانبان القصيران يحملان زاوية مقلوبة بارزة، ضلعها الخارجي يلتقي بزيادة الصاج وتُثبَّت به بثلاثة مسامير. الرأس والصامولة من الخارج، ولا شيء داخل التجويف.</li>
-        <li>شريط التقوية من الصاج في منتصف كل جانب متعامد عليه على شكل حرف T، عرضه 3 سم، ملحوم بحافته على الصاج، وطرفاه يستقران فوق جناح الزاوية السفلية وتحت جناح الزاوية العلوية (مع قطع صغير حول ساق الزاوية). إذا زاد طول الجانب عن 50 سم يُجعل شريطان بدل واحد، موزعين بالتساوي.</li>
+        <li>مبسط التقوية في منتصف كل جانب متعامد عليه على شكل حرف T، عرضه وسماكته مثل الزاوية المختارة، ملحوم بحافته على الصاج، وطرفاه يستقران فوق جناح الزاوية السفلية وتحت جناح الزاوية العلوية (مع قطع صغير حول ساق الزاوية). إذا زاد طول الجانب عن 50 سم يُجعل شريطان بدل واحد، موزعين بالتساوي.</li>
+        <li>إذا زاد ارتفاع الجدار عن 50 سم يُضاف مبسط أفقي بنفس عرض الزاوية وسماكتها في الوسط على كل جانب، ويُضاف مبسط آخر مع كل 50 سم زيادة. تُلحم القطع الأفقية بحافتها بين الأشرطة العمودية.</li>
         <li>الزوايا العلوية والسفلية والعمودية متصلة عند الأركان: أطراف العمودية تستقر على أجنحة الزوايا الأفقية، وساقها الملتصق بالصاج ينتهي عند ساق الزاوية الأفقية.</li>
         <li>مسامير الأرضية رأسية من فوق زاوية الجانب، والصامولة تحت الأرضية، أي خارج التجويف.</li>
         <li>اللُّب صندوق ملحوم وجهه المغلق للأسفل. يُثبَّت بمسمارين فقط في الطرفين المتقابلين: لسان على كل طرف قصير، المسمار رأسي، رأسه من فوق وصامولته تحت الزاوية العلوية. تدعيمه بمربعات على الحافة العليا وفي منتصف الارتفاع، وعمود في منتصف كل جانب، وعمود رفع أوسط بمقبض.</li>

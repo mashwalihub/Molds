@@ -19,13 +19,15 @@ body{direction:rtl;background:var(--bg);color:var(--fg);font-family:var(--font);
 @media(max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
 h1{font-size:1.45rem;margin:0 0 2px;text-wrap:balance}
 .sub{color:var(--muted);margin:0 0 10px;font-size:.95rem}
-#view{position:relative;background:var(--view);border:1px solid var(--line);border-radius:6px;height:min(70vh,620px);min-height:340px;overflow:hidden}
+#view{background:var(--view);border:1px solid var(--line);border-radius:6px;height:min(40vh,380px);min-height:230px;overflow:hidden;position:sticky;top:0;z-index:5}
 #view canvas{display:block;width:100%;height:100%;touch-action:none}
 #stepLabel{position:absolute;right:10px;top:10px;left:10px;font-size:1.05rem;pointer-events:none;text-wrap:balance}
 #stepLabel b{background:var(--accent);color:var(--accent-fg);padding:1px 8px;border-radius:3px;margin-left:6px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel h2{font-size:1.05rem;margin:0 0 6px;letter-spacing:.02em}
 .row{display:flex;flex-wrap:wrap;gap:6px}
+.row.one{flex-wrap:nowrap;gap:3px}
+.row.one button{flex:1 1 0;min-width:0;padding:6px 1px;font-size:clamp(.6rem,2.7vw,.9rem);white-space:nowrap}
 button{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 11px;cursor:pointer}
 button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -34,6 +36,35 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .sl output{font-variant-numeric:tabular-nums;text-align:left;direction:ltr}
 .sl b{min-width:5.2em}
 label.chk{display:inline-flex;gap:6px;align-items:center;margin-inline-end:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two .ctl,.two .ctl tbody{display:block}
+.two .ctl caption{display:block;font-size:.95rem}
+.two .ctl tr{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:4px}
+.two .ctl th{grid-column:1;grid-row:1;font-size:.9rem}
+.two .ctl td.v{grid-column:2;grid-row:1;width:auto}
+.two .ctl td:not(.v){grid-column:1/3;grid-row:2;display:block}
+.two .ctl input[type=range]{width:100%}
+.two .ctl input[type=number],.hz input[type=number]{max-width:100%;width:100%}
+.hz td input[type=range]{width:100%;min-width:60px}
+.hz th{padding:0 4px;font-size:.9rem}
+.hz{table-layout:fixed}
+.hz th:nth-child(1){width:4.4em}.hz th:nth-child(4){width:4.4em;white-space:nowrap}.hz th{padding:0 2px;font-size:.82rem}
+.hz td.v{width:2.2em}
+.hz td:last-child{width:4.2em}
+.hz td:last-child input{min-width:0;width:100%;padding:3px 2px;box-sizing:border-box}
+#cost tr.total td,#sCost{color:#e8102a;font-weight:700;font-size:1.15em}
+#sellT tr.total th,#sellT tr.total td{color:#0a5cff;font-weight:700;font-size:1.2em}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #cost tr.total td,:root:not([data-theme="light"]) #sCost{color:#ff6b7a}:root:not([data-theme="light"]) #sellT tr.total th,:root:not([data-theme="light"]) #sellT tr.total td{color:#5ea2ff}}
+:root[data-theme="dark"] #cost tr.total td,:root[data-theme="dark"] #sCost{color:#ff6b7a}
+:root[data-theme="dark"] #sellT tr.total th,:root[data-theme="dark"] #sellT tr.total td{color:#5ea2ff}
+output{color:#3b82f6;font-weight:700;font-size:1.12em}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) output{color:#7cc8ff}}
+:root[data-theme="dark"] output{color:#7cc8ff}
+.stp{display:flex;gap:4px;align-items:center;justify-content:flex-end}
+#sellT th{white-space:nowrap}
+#sPct{display:block;font-size:.88rem;color:#e8102a}
+.stp input[type=number]{width:3.8em;max-width:none;flex:none;text-align:center;padding:5px 2px}
+.stp button{padding:4px 9px;font-size:1.05rem;line-height:1}
 .ctl{width:100%;border-collapse:collapse}
 .ctl caption{text-align:right;font-weight:700;font-size:1.05rem;padding-bottom:4px}
 .ctl th{font-weight:400;white-space:nowrap}

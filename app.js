@@ -5,7 +5,7 @@ const RECT=[[15,30],[20,40],[25,50],[30,60],[40,80],[50,100]]; // rectangular tu
 const TAL=[0,...[...new Set([...SQ,...RECT.flat()])].sort((x,y)=>x-y)];
 const compat=a=>{if(!a)return[0];const r=new Set();if(SQ.includes(a))r.add(a);RECT.forEach(([p,q])=>{if(p===a)r.add(q);if(q===a)r.add(p);});return[...r].sort((x,y)=>x-y);};
 const TTH=[1,1.2,1.25,1.5,1.8,2,2.5,3,4,5,6]; // standard tube sides / wall thicknesses (mm)
-const SHEETS=[1.25,1.5,1.8,2,2.8,4,5,6,8,10,12,14,15,16,18,20,22,24,25,30,40]; // market sheet thicknesses (mm), nominal
+const SHEETS=[1.25,1.5,1.8,2,2.8,4,5,6,8]; // market sheet thicknesses (mm), nominal
 const BAR=600;
 const tubeKg=()=>2*TT*(TA*10+TB*10-2*TT)*7.85/1000; // kg per metre
 const angKg=()=>(2*ANG*10-AT*10)*(AT*10)*7.85/1000; // kg per metre
@@ -26,10 +26,15 @@ function geom(L,W,H,C){
   ];
   const sheet=[[Lc+2*T+2*ANG,Hc],[Lc+2*T+2*ANG,Hc],[Wc,Hc],[Wc,Hc],[Lc+2*ANG,Wc+2*ANG]];
   const nrib=len=>len>50?2:1,nl=nrib(Lc),ns=nrib(Wc); // walls longer than 50 cm get two T-ribs
-  for(let i=0;i<2*nl+2*ns;i++)sheet.push([3,Hc-2*AT]);      // mid strips
+  const flat=[];for(let i=0;i<2*nl+2*ns;i++)flat.push(Hc-2*AT);      // mid flat bars: width = angle leg, thickness = angle thickness
+  const nh=Math.max(0,Math.ceil(Hc/50-1e-9)-1); // horizontal flat-bar stiffeners: one more for every extra 50 cm of wall height
+  for(let h=0;h<nh;h++){
+    for(let j=0;j<2*(nl+1);j++)flat.push(Lc/(nl+1)-AT);
+    for(let j=0;j<2*(ns+1);j++)flat.push(Wc/(ns+1)-AT);
+  }
   sheet.push([L,H],[L,H],[W-2*T,H],[W-2*T,H],[L,W]);   // core walls + face
   const ang=[];for(let i=0;i<4;i++)ang.push(Lc+2*T+2*ANG,Wc,Hc-2*AT);
-  return {Lc,Wc,Hc,nr,nl,ns,tubes,sheet,ang};
+  return {Lc,Wc,Hc,nr,nl,ns,nh,tubes,sheet,ang,flat};
 }
 function maxrects(pieces,bins){
   const free=bins.map(b=>[{x:0,y:0,w:b[0],h:b[1]}]);
@@ -53,7 +58,7 @@ function maxrects(pieces,bins){
     }
     free[best.bi]=out.filter((a,i)=>!out.some((b,j)=>j!==i&&a.x>=b.x-1e-9&&a.y>=b.y-1e-9&&a.x+a.w<=b.x+b.w+1e-9&&a.y+a.h<=b.y+b.h+1e-9&&(a.x!==b.x||a.y!==b.y||a.w!==b.w||a.h!==b.h||j<i)));
   }
-  return true;
+  return free;
 }
 function bestSheets(pieces){
   const A1=2.0,A2=1.22*2.44,need=pieces.reduce((s,p)=>s+p[0]*p[1],0)/1e4;
@@ -63,9 +68,27 @@ function bestSheets(pieces){
   c.sort((x,y)=>x[0]-y[0]);
   for(const [ar,a,b] of c.slice(0,160)){
     const bins=[];for(let i=0;i<b;i++)bins.push([122,244]);for(let i=0;i<a;i++)bins.push([100,200]);
-    if(maxrects(ps,bins))return {a,b,area:ar,need};
+    const fr=maxrects(ps,bins);
+    if(fr)return {a,b,area:ar,need,free:fr,bins};
   }
   return null;
+}
+const FR=[.25,1/3,.5,2/3,.75,1];
+const nearF=x=>FR.some(f=>Math.abs(x-f)<=0.06);
+/* default waste: 3% base (cuts + joints) + a share of the leftover that cannot be reused later (not a clean 1/4, 1/3, 1/2, 2/3, 3/4 of the sheet), max 10% */
+function autoWaste(res){
+  if(!res)return 5;
+  const area=res.bins.reduce((s,b)=>s+b[0]*b[1],0),left=area-res.need*1e4;
+  let clean=0;
+  res.free.forEach((list,bi)=>{
+    const [Ws,Hs]=res.bins[bi],picked=[];
+    list.filter(r=>nearF(r.w/Ws)&&nearF(r.h/Hs)).sort((p,q)=>q.w*q.h-p.w*p.h).forEach(r=>{
+      if(picked.some(q=>!(r.x>=q.x+q.w-1e-9||r.x+r.w<=q.x+1e-9||r.y>=q.y+q.h-1e-9||r.y+r.h<=q.y+1e-9)))return;
+      picked.push(r);clean+=r.w*r.h;
+    });
+  });
+  const u=Math.max(0,left-clean)/area*100;
+  return Math.round(Math.min(10,3+0.25*u)*2)/2;
 }
 function ffd(lens){
   const bins=[];
@@ -79,6 +102,8 @@ const f1=x=>(Math.round(x*10)/10).toLocaleString('en-US',{minimumFractionDigits:
 const money=x=>'⃁ '+Math.round(x).toLocaleString('en-US');
 function renderCost(g){
   const pS=parseFloat($('pSheet').value)||0,pA=parseFloat($('pAng').value)||0,pT=parseFloat($('pTube').value);
+  const res=bestSheets(g.sheet);
+  if($('wAuto').checked&&res){$('pW').value=autoWaste(res);$('oW').textContent=$('pW').value;}
   const wf=1+(Math.max(0,parseFloat($('pW').value)||0))/100,wp=Math.round((wf-1)*1000)/10;
   const SK=7.85*THK;
   const uS=g.sheet.reduce((s,p)=>s+p[0]*p[1],0)/1e4*SK;
@@ -88,9 +113,12 @@ function renderCost(g){
   const buy=[];
   const cS=uS*wf*pS/1000;total+=cS;
   h+=`<tr><td>صاج ${THK} مم</td><td>${f1(uS)}</td><td>${f1(uS*wf)}</td><td>${money(cS)}</td></tr>`;
-  const res=bestSheets(g.sheet);
   if(res)buy.push('صاج: '+[res.a?res.a+' لوح 100×200':'',res.b?res.b+' لوح 122×244':''].filter(Boolean).join(' + '));
   else buy.push('صاج: القطع أكبر من أقصى لوح متاح');
+  const uF=g.flat.reduce((a,x)=>a+x,0)*ANG*AT*7.85/1000;
+  const cF=uF*wf*pS/1000;total+=cF;
+  h+=`<tr><td>مبسط ${ANG*10}×${AT*10} مم</td><td>${f1(uF)}</td><td>${f1(uF*wf)}</td><td>${money(cF)}</td></tr>`;
+  buy.push('مبسط: '+ffd(g.flat)+' عود 6 م');
   const cA=uA*wf*pA/1000;total+=cA;
   h+=`<tr><td>زاوية ${ANG*10}×${ANG*10}×${AT*10} مم</td><td>${f1(uA)}</td><td>${f1(uA*wf)}</td><td>${money(cA)}</td></tr>`;
   buy.push('زاوية: '+ffd(g.ang)+' عود 6 م');
@@ -108,6 +136,7 @@ function renderCost(g){
   $('cost').innerHTML=h;
   const m=Math.max(0,parseFloat($('pM').value)||0),pre=total*m,vat=pre*0.15;
   $('sCost').innerHTML=money(total);
+  $('sPct').textContent='(ربح '+(Math.round((m-1)*1000)/10)+'%)';
   $('sLbl').textContent='السعر قبل الضريبة ('+m+' '+(m===1?'ضعف':(m>=3&&m<=10&&m===Math.floor(m)?'أضعاف':'ضعف'))+')';
   $('sPre').innerHTML=money(pre);$('sVat').innerHTML=money(vat);$('sPost').innerHTML=money(pre+vat);
 }
@@ -150,7 +179,7 @@ function build(resetCam){
   const L=+$('sx').value,W=+$('sy').value,H=+$('sz').value,C=+$('st').value;THK=SHEETS[+$('sm').value];T=THK/10;TA=TAL[+$('ta').value]/10;TB=bVal/10;TT=ttVal;ANG=ANGL[+$('sa').value]/10;AT=atVal/10;
   if(root){scene.remove(root);root.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
   root=new THREE.Group();scene.add(root);
-  const g0=geom(L,W,H,C),{Lc,Wc,Hc,nr,nl,ns}=g0;
+  const g0=geom(L,W,H,C),{Lc,Wc,Hc,nr,nl,ns,nh}=g0;
   S={L,W,H,Lc,Wc,Hc,g:g0};
   const gCore=new THREE.Group(),gConc=new THREE.Group(),gFloor=new THREE.Group(),gOuter=new THREE.Group();
   const gLong={1:new THREE.Group(),'-1':new THREE.Group()},gShort={1:new THREE.Group(),'-1':new THREE.Group()};
@@ -167,8 +196,11 @@ function build(resetCam){
     box(g,aL,ANG,AT,0,ANG/2,zo+sz*AT/2,mats.ang);
     for(let k=1;k<=nl;k++){ // T-ribs: ends rest on the angle flanges (notched around the angle leg)
       const px=-Lc/2+k*Lc/(nl+1);
-      box(g,T,Hc-2*ANG,3,px,Hc/2,zo+sz*1.5,mats.strip);
-      [(AT+ANG)/2,Hc-(AT+ANG)/2].forEach(y=>box(g,T,ANG-AT,3-AT,px,y,zo+sz*(AT+(3-AT)/2),mats.strip));
+      box(g,AT,Hc-2*ANG,ANG,px,Hc/2,zo+sz*ANG/2,mats.strip);
+      [(AT+ANG)/2,Hc-(AT+ANG)/2].forEach(y=>box(g,AT,ANG-AT,ANG-AT,px,y,zo+sz*(AT+(ANG-AT)/2),mats.strip));
+    }
+    for(let h=1;h<=nh;h++)for(let j=0;j<=nl;j++){ // horizontal flat bars between the T-ribs
+      const sl=Lc/(nl+1);box(g,sl-AT,AT,ANG,-Lc/2+(j+.5)*sl,Hc*h/(nh+1),zo+sz*ANG/2,mats.strip);
     }
     const n=boltCount(aL);info.botLong=n;
     boltPos(aL,n).forEach(x=>{const b=bolt(gOuter,x,-.4,zo+sz*(ANG-.3)/2,new THREE.Vector3(0,-1,0),2.0,true);bb.push({g:b,by:b.position.y});});
@@ -182,8 +214,8 @@ function build(resetCam){
     box(g,AT,ANG,rA,xo+sx*AT/2,ANG/2,0,mats.ang);
     for(let k=1;k<=ns;k++){
       const pz=-Wc/2+k*Wc/(ns+1);
-      box(g,3,Hc-2*ANG,T,xo+sx*1.5,Hc/2,pz,mats.strip);
-      [(AT+ANG)/2,Hc-(AT+ANG)/2].forEach(y=>box(g,3-AT,ANG-AT,T,xo+sx*(AT+(3-AT)/2),y,pz,mats.strip));
+      box(g,ANG,Hc-2*ANG,AT,xo+sx*ANG/2,Hc/2,pz,mats.strip);
+      [(AT+ANG)/2,Hc-(AT+ANG)/2].forEach(y=>box(g,ANG-AT,ANG-AT,AT,xo+sx*(AT+(ANG-AT)/2),y,pz,mats.strip));
     }
     [1,-1].forEach(sz=>{
       // inverted corner angle: leg A welded on the short wall, leg B sticks out and meets the long wall's 3 cm extension
@@ -197,6 +229,9 @@ function build(resetCam){
         jb.push({g:b,sz,bz:b.position.z});
       });
     });
+    for(let h=1;h<=nh;h++)for(let j=0;j<=ns;j++){
+      const sl=Wc/(ns+1);box(g,ANG,AT,sl-AT,xo+sx*ANG/2,Hc*h/(nh+1),-Wc/2+(j+.5)*sl,mats.strip);
+    }
     const n=boltCount(rA);info.botShort=n;
     boltPos(rA,n).forEach(z=>{const b=bolt(gOuter,xo+sx*(ANG-.3)/2,-.4,z,new THREE.Vector3(0,-1,0),2.0,true);bb.push({g:b,by:b.position.y});});
   });
@@ -301,7 +336,15 @@ function syncT(){ // max wall thickness by the smaller side: <20 mm: 3, <60 mm: 
 $('tt').addEventListener('input',()=>{ttVal=ttList[+$('tt').value];schedule();});
 $('ta').addEventListener('input',()=>{syncB();schedule();});
 $('tb').addEventListener('input',()=>{bVal=bList[+$('tb').value];syncT();schedule();});
-$('pW').addEventListener('input',()=>{$('oW').textContent=$('pW').value;});
+$('pW').addEventListener('input',()=>{$('wAuto').checked=false;$('oW').textContent=$('pW').value;});
+$('wAuto').addEventListener('change',()=>renderCost(S.g));
+$('pSheet').addEventListener('input',()=>{const v=+$('pSheet').value;['pAng','pTube'].forEach(i=>{$(i).min=v+300;$(i).max=Math.max(6500,v+3000);$(i).value=v+500;});['oPA','oPT'].forEach((o,k)=>{$(o).textContent=$(k?'pTube':'pAng').value;});});
+[['pSheet','oPS'],['pAng','oPA'],['pTube','oPT']].forEach(([i,o])=>{const u=()=>{$(o).textContent=$(i).value;};$(i).addEventListener('input',u);u();});
+const clampM=()=>{let v=parseFloat($('pM').value);if(!(v>=2))v=2;if(v>6)v=6;$('pM').value=v;};
+const stepM=d=>{let v=parseFloat($('pM').value);if(isNaN(v))v=2.5;v=Math.round((v+d)*100)/100;$('pM').value=Math.min(6,Math.max(2,v));renderCost(S.g);};
+$('mUp').addEventListener('click',()=>stepM(0.25));$('mDn').addEventListener('click',()=>stepM(-0.25));
+['change','blur'].forEach(ev=>$('pM').addEventListener(ev,()=>{clampM();renderCost(S.g);}));
+$('pM').addEventListener('keydown',e=>{if(e.key==='Enter')$('pM').blur();});
 ['pSheet','pAng','pTube','pW','pM'].forEach(id=>$(id).addEventListener('input',()=>renderCost(S.g)));
 
 slider.oninput=()=>{stopPlay();apply(+slider.value/1000);};
