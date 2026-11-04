@@ -16,11 +16,10 @@ button{font:inherit;padding:6px 14px;margin:4px;border:1px solid #999;border-rad
 </head>
 <body>
 <h1>هيكل قبة معدني — قطر 12 م، ارتفاع 4 م</h1>
-<p>تيوب 40×40×2 ملم — 8 حلقات أفقية، 24 ضلعاً تلتقي في صفيحة قطرها 50 سم، و48 ضلعاً عند القاعدة. اسحب للتدوير.</p>
+<p>تيوب 40×40×2 ملم — 8 حلقات أفقية و30 ضلعاً كاملاً تلتقي في صفيحة قطرها 60 سم. اسحب للتدوير.</p>
 <div class="lg">
-<span><i style="background:#185FA5"></i>24 ضلعاً تلتقي في القمة</span>
-<span><i style="background:#D85A30"></i>+24 من الحلقة 6</span>
-<span><i style="background:#222"></i>صفيحة القمة 50 سم</span>
+<span><i style="background:#185FA5"></i>30 ضلعاً كاملاً من القمة إلى القاعدة</span>
+<span><i style="background:#222"></i>صفيحة القمة 60 سم</span>
 <span><i style="background:#888780"></i>حلقات أفقية</span>
 </div>
 <canvas id="c"></canvas>
@@ -35,10 +34,9 @@ function fit(){const r=window.devicePixelRatio||1;cv.width=cv.clientWidth*r;cv.h
 fit();addEventListener('resize',fit);
 const R=6.5,ZC=-2.5,TM=Math.asin(6/R),N=8,lines=[];
 function P(t,p){return[R*Math.sin(t)*Math.cos(p),R*Math.sin(t)*Math.sin(p),R*Math.cos(t)+ZC]}
-const T0=Math.asin(0.25/R);
+const T0=Math.asin(0.30/R);
 function rib(ph,t0,col){const pts=[];for(let i=0;i<=24;i++)pts.push(P(t0+(TM-t0)*i/24,ph));lines.push({pts,col,w:2})}
-for(let i=0;i<24;i++)rib(i*Math.PI/12,T0,'#185FA5');
-for(let i=0;i<24;i++)rib((i+.5)*Math.PI/12,6*TM/N,'#D85A30');
+for(let i=0;i<30;i++)rib(i*Math.PI/15,T0,'#185FA5');
 {const pts=[];for(let i=0;i<=48;i++)pts.push(P(T0,i*Math.PI/24));lines.push({pts,col:'#222',w:4})}
 for(let k=1;k<=N;k++){const pts=[];for(let i=0;i<=72;i++)pts.push(P(k*TM/N,i*Math.PI/36));lines.push({pts,col:'#888780',w:1.5})}
 let yaw=.6,pitch=.5,auto=true,drag=null;
