@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>هيكل قبة 12 م × 4 م</title>
+<style>
+body{margin:0;font-family:"Times New Roman",serif;background:#f6f5f1;color:#222;text-align:center}
+h1{font-size:22px;margin:16px 8px 4px}
+p{margin:4px 8px;color:#555;font-size:15px}
+canvas{width:100%;max-width:900px;height:62vh;touch-action:none;background:#fff;border-radius:12px;margin-top:8px}
+.lg{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;font-size:14px;margin:8px}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-inline-end:4px}
+button{font:inherit;padding:6px 14px;margin:4px;border:1px solid #999;border-radius:8px;background:#fff}
+</style>
+</head>
+<body>
+<h1>هيكل قبة معدني — قطر 12 م، ارتفاع 4 م</h1>
+<p>تيوب 40×40×2 ملم — 8 حلقات أفقية و48 ضلعاً عند القاعدة. اسحب للتدوير.</p>
+<div class="lg">
+<span><i style="background:#185FA5"></i>12 ضلعاً من القمة</span>
+<span><i style="background:#1D9E75"></i>+12 من الحلقة 3</span>
+<span><i style="background:#D85A30"></i>+24 من الحلقة 6</span>
+<span><i style="background:#888780"></i>حلقات أفقية</span>
+</div>
+<canvas id="c"></canvas>
+<div>
+<button id="rot">إيقاف الدوران</button>
+<button id="top">منظر علوي</button>
+<button id="side">منظر جانبي</button>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+function fit(){const r=window.devicePixelRatio||1;cv.width=cv.clientWidth*r;cv.height=cv.clientHeight*r}
+fit();addEventListener('resize',fit);
+const R=6.5,ZC=-2.5,TM=Math.asin(6/R),N=8,lines=[];
+function P(t,p){return[R*Math.sin(t)*Math.cos(p),R*Math.sin(t)*Math.sin(p),R*Math.cos(t)+ZC]}
+function rib(ph,k0,col){const pts=[],t0=k0*TM/N;for(let i=0;i<=24;i++)pts.push(P(t0+(TM-t0)*i/24,ph));lines.push({pts,col,w:2})}
+for(let i=0;i<12;i++)rib(i*Math.PI/6,0,'#185FA5');
+for(let i=0;i<12;i++)rib((i+.5)*Math.PI/6,3,'#1D9E75');
+for(let i=0;i<24;i++)rib((i+.5)*Math.PI/12,6,'#D85A30');
+for(let k=1;k<=N;k++){const pts=[];for(let i=0;i<=72;i++)pts.push(P(k*TM/N,i*Math.PI/36));lines.push({pts,col:'#888780',w:1.5})}
+let yaw=.6,pitch=.5,auto=true,drag=null;
+function draw(){
+const W=cv.width,H=cv.height,r=window.devicePixelRatio||1;ctx.clearRect(0,0,W,H);
+const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),sc=Math.min(W/15,H/9);
+const pr=p=>{const x=p[0]*cy-p[1]*sy,y=p[0]*sy+p[1]*cy;return[W/2+x*sc,H*.6-(p[2]*cp+y*sp)*sc]};
+const o=lines.map(l=>({l,d:l.pts.reduce((a,p)=>a+(p[0]*sy+p[1]*cy),0)/l.pts.length})).sort((a,b)=>b.d-a.d);
+for(const e of o){ctx.beginPath();e.l.pts.forEach((p,i)=>{const q=pr(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.strokeStyle=e.l.col;ctx.lineWidth=e.l.w*r;ctx.stroke()}}
+(function loop(){if(auto&&!drag)yaw+=.006;draw();requestAnimationFrame(loop)})();
+cv.onpointerdown=e=>{drag=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId)};
+cv.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.01;pitch=Math.max(0,Math.min(1.57,pitch+(e.clientY-drag[1])*.01));drag=[e.clientX,e.clientY]};
+cv.onpointerup=()=>drag=null;
+rot.onclick=function(){auto=!auto;this.textContent=auto?'إيقاف الدوران':'تشغيل الدوران'};
+document.getElementById('top').onclick=()=>pitch=1.57;document.getElementById('side').onclick=()=>pitch=.05;
+</script>
+</body>
+</html>
